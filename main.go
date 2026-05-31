@@ -7,9 +7,13 @@ import (
 )
 
 type Task struct {
-	ID    int
-	Title string
-	Done  bool
+	ID    int    `json:"id"`
+	Title string `json"title"`
+	Done  bool   `json"done"`
+}
+
+type CreateTaskRequest struct {
+	Title string `json:"title"`
 }
 
 // Пока задачи хранятся в памяти. после подключения БД
@@ -29,9 +33,19 @@ var tasks = []Task{
 
 // Возвращает список задач в формате JSON
 func tasksHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 
-	json.NewEncoder(w).Encode(tasks)
+	if r.Method == http.MethodGet {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(tasks)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		// asd
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
 
 func main() {
