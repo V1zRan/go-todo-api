@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -11,6 +12,8 @@ type Task struct {
 	Done  bool
 }
 
+// Пока задачи хранятся в памяти. после подключения БД
+// После подключения БД этот слайс будет удалён.
 var tasks = []Task{
 	{
 		ID:    1,
@@ -24,6 +27,13 @@ var tasks = []Task{
 	},
 }
 
+// Возвращает список задач в формате JSON
+func tasksHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	json.NewEncoder(w).Encode(tasks)
+}
+
 func main() {
 
 	fmt.Println(tasks)
@@ -35,12 +45,11 @@ func main() {
 		fmt.Fprintf(w, "Host: %s\n", r.Host)
 	})
 
-	http.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, tasks)
-	})
+	http.HandleFunc("/tasks", tasksHandler)
 
 	fmt.Println("Server os running on http://localhost:8080")
 
+	// Запуск сервера
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println("Server error:", err)
