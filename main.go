@@ -20,6 +20,12 @@ type CreateTaskRequest struct {
 	Title string `json:"title"`
 }
 
+// Структура для обновления данных задачи пользователем
+type UpdateTaskRequest struct {
+	Title string `json:"title"`
+	Done  bool   `json:"done"`
+}
+
 // Пока задачи хранятся в памяти. после подключения БД
 // После подключения БД этот слайс будет удалён.
 var tasks = []Task{
@@ -69,27 +75,53 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 // Получаем ID задачи и возвращаем только её данные
 func hanldeTaskByID(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+	switch r.Method {
+	case http.MethodGet:
+		idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
 
-	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
-
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "Invalid task ID", http.StatusBadRequest)
-		return
-	}
-
-	for _, task := range tasks {
-		if task.ID == id {
-			json.NewEncoder(w).Encode(task)
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid task ID", http.StatusBadRequest)
 			return
 		}
-		http.Error(w, "Task not found", http.StatusNotFound)
-		return
+
+		for _, task := range tasks {
+			if task.ID == id {
+				json.NewEncoder(w).Encode(task)
+				return
+			}
+			http.Error(w, "Task not found", http.StatusNotFound)
+			return
+		}
+	case http.MethodPut:
+		idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
+
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid task ID", http.StatusBadRequest)
+			return
+		}
+		var req UpdateTaskRequest
+
+		err = json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+		for i := range tasks {
+			if tasks[i].ID == id {
+				tasks[i].Title = req.Title
+				tasks[i].Done = req.Done
+
+				json.NewEncoder(w).Encode(tasks[i])
+				return
+			}
+		}
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+
 }
 
 func main() {
