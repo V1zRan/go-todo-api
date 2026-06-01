@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 // Структура описывает задачу, которая существует в системе
@@ -65,9 +67,32 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
 
-func main() {
+// Получаем ID задачи и возвращаем только её данные
+func hanldeTaskByID(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-	fmt.Println(tasks)
+	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	for _, task := range tasks {
+		if task.ID == id {
+			json.NewEncoder(w).Encode(task)
+			return
+		}
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
+	}
+}
+
+func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Home page")
@@ -77,8 +102,10 @@ func main() {
 	})
 
 	http.HandleFunc("/tasks", tasksHandler)
+	http.HandleFunc("/tasks/", hanldeTaskByID)
 
 	fmt.Println("Server os running on http://localhost:8080")
+	fmt.Println("page http://localhost:8080/tasks")
 
 	// Запуск сервера
 	err := http.ListenAndServe(":8080", nil)
