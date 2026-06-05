@@ -74,33 +74,27 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Получаем ID задачи и возвращаем только её данные
-func hanldeTaskByID(w http.ResponseWriter, r *http.Request) {
+func handleTaskByID(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
-		idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
-
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			http.Error(w, "Invalid task ID", http.StatusBadRequest)
-			return
-		}
 
 		for _, task := range tasks {
 			if task.ID == id {
 				json.NewEncoder(w).Encode(task)
 				return
 			}
-			http.Error(w, "Task not found", http.StatusNotFound)
-			return
 		}
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
 	case http.MethodPut:
-		idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
-
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			http.Error(w, "Invalid task ID", http.StatusBadRequest)
-			return
-		}
 		var req UpdateTaskRequest
 
 		err = json.NewDecoder(r.Body).Decode(&req)
@@ -117,6 +111,19 @@ func hanldeTaskByID(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
+	case http.MethodDelete:
+		for i, task := range tasks {
+			if task.ID == id {
+				tasks = append(tasks[:i], tasks[i+1:]...)
+				w.WriteHeader(http.StatusNoContent)
+				return
+
+			}
+		}
+
+		http.Error(w, "task not found", http.StatusNotFound)
 
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -125,6 +132,7 @@ func hanldeTaskByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	test()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Home page")
@@ -134,7 +142,7 @@ func main() {
 	})
 
 	http.HandleFunc("/tasks", tasksHandler)
-	http.HandleFunc("/tasks/", hanldeTaskByID)
+	http.HandleFunc("/tasks/", handleTaskByID)
 
 	fmt.Println("Server os running on http://localhost:8080")
 	fmt.Println("page http://localhost:8080/tasks")
