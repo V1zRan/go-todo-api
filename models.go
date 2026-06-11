@@ -21,18 +21,3 @@ type UpdateTaskRequest struct {
 	Title string `json:"title"`
 	Done  bool   `json:"done"`
 }
-
-// Пока задачи хранятся в памяти.
-// После подключения БД этот слайс будет удалён.
-var tasks = []Task{
-	{
-		ID:    1,
-		Title: "30.05.2026 - изучать GO",
-		Done:  false,
-	},
-	{
-		ID:    2,
-		Title: "30.05.2026 - Купить чоколодные трубочки",
-		Done:  true,
-	},
-}

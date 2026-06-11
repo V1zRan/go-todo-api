@@ -18,7 +18,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(tasks)
+		json.NewEncoder(w).Encode(getAllTasks())
 		return
 	}
 
@@ -32,12 +32,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		newTask := Task{
-			ID:    len(tasks) + 1,
-			Title: req.Title,
-			Done:  false,
-		}
-		tasks = append(tasks, newTask)
+		newTask := createTask(req.Title)
 		// Возвращаем созданную задачу клиенту
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(newTask)
@@ -65,13 +60,12 @@ func handleTaskByID(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 
-		for _, task := range tasks {
-			if task.ID == id {
-				json.NewEncoder(w).Encode(task)
-				return
-			}
+		task, found := getTaskById(id)
+		if !found {
+			http.Error(w, "Task not found", http.StatusNotFound)
+			return
 		}
-		http.Error(w, "Task not found", http.StatusNotFound)
+		json.NewEncoder(w).Encode(task)
 		return
 	case http.MethodPut:
 		var req UpdateTaskRequest
@@ -81,28 +75,22 @@ func handleTaskByID(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
-		for i := range tasks {
-			if tasks[i].ID == id {
-				tasks[i].Title = req.Title
-				tasks[i].Done = req.Done
 
-				json.NewEncoder(w).Encode(tasks[i])
-				return
-			}
+		updatedTask, found := updateTask(id, req)
+		if !found {
+			http.Error(w, "Task not found", http.StatusNotFound)
+			return
 		}
-		http.Error(w, "Task not found", http.StatusNotFound)
+		json.NewEncoder(w).Encode(updatedTask)
 		return
 	case http.MethodDelete:
-		for i, task := range tasks {
-			if task.ID == id {
-				tasks = append(tasks[:i], tasks[i+1:]...)
-				w.WriteHeader(http.StatusNoContent)
-				return
-
-			}
+		deleted := deleteTask(id)
+		if !deleted {
+			http.Error(w, "task not found", http.StatusNotFound)
+			return
 		}
 
-		http.Error(w, "task not found", http.StatusNotFound)
+		w.WriteHeader(http.StatusNoContent)
 		return
 
 	default:
