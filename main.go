@@ -10,6 +10,11 @@ import (
 )
 
 func main() {
+	err := loadTasks()
+	if err != nil {
+		fmt.Println("Failed to load tasks", err)
+		return
+	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Home page")
@@ -25,7 +30,7 @@ func main() {
 	fmt.Println("page http://localhost:8080/tasks")
 
 	// Запуск сервера
-	err := http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println("Server error:", err)
 	}
