@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -29,6 +30,12 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		err = validateTitle(req.Title)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -81,6 +88,12 @@ func handleTaskByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		err = validateTitle(req.Title)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		updatedTask, found, err := updateTask(id, req)
 		if err != nil {
 			http.Error(w, "failed to save task", http.StatusInternalServerError)
@@ -113,4 +126,16 @@ func handleTaskByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 
+}
+
+func validateTitle(title string) error {
+	if strings.TrimSpace(title) == "" {
+		return errors.New("title is required")
+	}
+
+	if len([]rune(title)) > 100 {
+		return errors.New("title is too long")
+	}
+
+	return nil
 }
