@@ -32,7 +32,12 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		newTask := createTask(req.Title)
+		newTask, err := createTask(req.Title)
+		if err != nil {
+			// статус 500
+			http.Error(w, "failed to save task", http.StatusInternalServerError)
+			return
+		}
 		// Возвращаем созданную задачу клиенту
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(newTask)
@@ -76,15 +81,26 @@ func handleTaskByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		updatedTask, found := updateTask(id, req)
+		updatedTask, found, err := updateTask(id, req)
+		if err != nil {
+			http.Error(w, "failed to save task", http.StatusInternalServerError)
+		}
+
 		if !found {
 			http.Error(w, "Task not found", http.StatusNotFound)
 			return
 		}
+
 		json.NewEncoder(w).Encode(updatedTask)
 		return
 	case http.MethodDelete:
-		deleted := deleteTask(id)
+		deleted, err := deleteTask(id)
+
+		if err != nil {
+			http.Error(w, "failed to delete task", http.StatusInternalServerError)
+			return
+		}
+
 		if !deleted {
 			http.Error(w, "task not found", http.StatusNotFound)
 			return

@@ -25,7 +25,7 @@ var nextID = 3
 
 // Создаёт новую задачу, сохраняет её в хранилище
 // и возвращает созданный объект.
-func createTask(title string) Task {
+func createTask(title string) (Task, error) {
 	task := Task{
 		ID:    nextID,
 		Title: title,
@@ -33,8 +33,11 @@ func createTask(title string) Task {
 	}
 	nextID++
 	tasks = append(tasks, task)
-	saveTasks()
-	return task
+	err := saveTasks()
+	if err != nil {
+		return Task{}, err
+	}
+	return task, nil
 }
 
 // Возвращает список всех задач.
@@ -55,33 +58,39 @@ func getTaskById(id int) (Task, bool) {
 
 // Обновляет задачу по ID.
 // Возвращает обновлённую задачу и признак успешного обновления.
-func updateTask(id int, req UpdateTaskRequest) (Task, bool) {
+func updateTask(id int, req UpdateTaskRequest) (Task, bool, error) {
 	for i := range tasks {
 		if tasks[i].ID == id {
 			tasks[i].Title = req.Title
 			tasks[i].Done = req.Done
 
-			saveTasks()
+			err := saveTasks()
+			if err != nil {
+				return Task{}, true, err
+			}
 
-			return tasks[i], true
+			return tasks[i], true, nil
 		}
 	}
-	return Task{}, false
+	return Task{}, false, nil
 }
 
 // Удаляет задачу по ID.
 // Возвращает true, если задача была найдена и удалена.
-func deleteTask(id int) bool {
+func deleteTask(id int) (bool, error) {
 	for i, task := range tasks {
 		if task.ID == id {
 			tasks = append(tasks[:i], tasks[i+1:]...)
 
-			saveTasks()
+			err := saveTasks()
+			if err != nil {
+				return true, err
+			}
 
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 const taskFile = "tasks.json"
