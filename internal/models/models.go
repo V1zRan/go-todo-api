@@ -2,13 +2,13 @@
 //
 // Структуры данных приложения.
 // Здесь описаны Task и структуры запросов API.
-package main
+package models
 
 // Структура описывает задачу, которая существует в системе
 type Task struct {
 	ID    int    `json:"id"`
-	Title string `json"title"`
-	Done  bool   `json"done"`
+	Title string `json:"title"`
+	Done  bool   `json:"done"`
 }
 
 // Структура для создания задачи пользователем

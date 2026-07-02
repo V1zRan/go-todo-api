@@ -7,10 +7,12 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"todo-api/internal/handlers"
+	"todo-api/internal/storage"
 )
 
 func main() {
-	err := loadTasks()
+	err := storage.LoadTasks()
 	if err != nil {
 		fmt.Println("Failed to load tasks", err)
 		return
@@ -23,8 +25,8 @@ func main() {
 		fmt.Fprintf(w, "Host: %s\n", r.Host)
 	})
 
-	http.HandleFunc("/tasks", tasksHandler)
-	http.HandleFunc("/tasks/", handleTaskByID)
+	http.HandleFunc("/tasks", handlers.TasksHandler)
+	http.HandleFunc("/tasks/", handlers.HandleTaskByID)
 
 	fmt.Println("Server os running on http://localhost:8080")
 	fmt.Println("page http://localhost:8080/tasks")

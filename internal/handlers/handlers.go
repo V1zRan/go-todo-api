@@ -1,7 +1,7 @@
 // handlers.go
 //
 // HTTP-обработчики для работы с задачами.
-package main
+package handlers
 
 import (
 	"encoding/json"
@@ -9,23 +9,25 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"todo-api/internal/models"
+	"todo-api/internal/storage"
 )
 
 // tasksHandler обрабатывает запросы к списку задач.
 // Поддерживает:
 // GET /tasks  — получить все задачи
 // POST /tasks — создать новую задачу
-func tasksHandler(w http.ResponseWriter, r *http.Request) {
+func TasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(getAllTasks())
+		json.NewEncoder(w).Encode(storage.GetAllTasks())
 		return
 	}
 
 	if r.Method == http.MethodPost {
 		// Декодируем JSON из тела запроса в Go-структуру
-		var req CreateTaskRequest
+		var req models.CreateTaskRequest
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
@@ -39,7 +41,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		newTask, err := createTask(req.Title)
+		newTask, err := storage.CreateTask(req.Title)
 		if err != nil {
 			// статус 500
 			http.Error(w, "failed to save task", http.StatusInternalServerError)
@@ -59,7 +61,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 // GET /tasks/{id}    — получить задачу
 // PUT /tasks/{id}    — обновить задачу
 // DELETE /tasks/{id} — удалить задачу
-func handleTaskByID(w http.ResponseWriter, r *http.Request) {
+func HandleTaskByID(w http.ResponseWriter, r *http.Request) {
 	// Достаём ID задачи из URL и переводим его из строки в число.
 	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
 
@@ -72,7 +74,7 @@ func handleTaskByID(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 
-		task, found := getTaskById(id)
+		task, found := storage.GetTaskById(id)
 		if !found {
 			http.Error(w, "Task not found", http.StatusNotFound)
 			return
@@ -80,7 +82,7 @@ func handleTaskByID(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(task)
 		return
 	case http.MethodPut:
-		var req UpdateTaskRequest
+		var req models.UpdateTaskRequest
 
 		err = json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
@@ -94,7 +96,7 @@ func handleTaskByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		updatedTask, found, err := updateTask(id, req)
+		updatedTask, found, err := storage.UpdateTask(id, req)
 		if err != nil {
 			http.Error(w, "failed to save task", http.StatusInternalServerError)
 		}
@@ -107,7 +109,7 @@ func handleTaskByID(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(updatedTask)
 		return
 	case http.MethodDelete:
-		deleted, err := deleteTask(id)
+		deleted, err := storage.DeleteTask(id)
 
 		if err != nil {
 			http.Error(w, "failed to delete task", http.StatusInternalServerError)
