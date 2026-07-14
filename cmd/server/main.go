@@ -6,16 +6,30 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"todo-api/internal/handlers"
-	"todo-api/internal/storage"
+	"todo-api/internal/storage/postgres"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := storage.LoadTasks()
+	// Загружаем переменные окружения из .env для локальной разработки
+	err := godotenv.Load()
 	if err != nil {
-		fmt.Println("Failed to load tasks", err)
-		return
+		log.Fatal(err)
+	}
+
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL is not set")
+	}
+
+	postgresStorage, err := postgres.NewStorage(dsn)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -25,8 +39,8 @@ func main() {
 		fmt.Fprintf(w, "Host: %s\n", r.Host)
 	})
 
-	http.HandleFunc("/tasks", handlers.TasksHandler)
-	http.HandleFunc("/tasks/", handlers.HandleTaskByID)
+	http.HandleFunc("/tasks", handlers.TasksHandler(postgresStorage))
+	http.HandleFunc("/tasks/", handlers.HandleTaskByID(postgresStorage))
 
 	fmt.Println("Server os running on http://localhost:8080")
 	fmt.Println("page http://localhost:8080/tasks")

@@ -6,9 +6,9 @@ package models
 
 // Структура описывает задачу, которая существует в системе
 type Task struct {
-	ID    int    `json:"id"`
-	Title string `json:"title"`
-	Done  bool   `json:"done"`
+	ID        int    `json:"id"`
+	Title     string `json:"title"`
+	Completed bool   `json:"completed"`
 }
 
 // Структура для создания задачи пользователем
@@ -18,6 +18,6 @@ type CreateTaskRequest struct {
 
 // Структура для обновления данных задачи пользователем
 type UpdateTaskRequest struct {
-	Title string `json:"title"`
-	Done  bool   `json:"done"`
+	Title     string `json:"title"`
+	Completed bool   `json:"completed"`
 }
