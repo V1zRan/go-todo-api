@@ -8,26 +8,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
+	"todo-api/internal/config"
 	"todo-api/internal/handlers"
 	"todo-api/internal/storage/postgres"
-
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Загружаем переменные окружения из .env для локальной разработки
-	err := godotenv.Load()
+	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		log.Fatal("DATABASE_URL is not set")
-	}
-
-	postgresStorage, err := postgres.NewStorage(dsn)
+	postgresStorage, err := postgres.NewStorage(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
