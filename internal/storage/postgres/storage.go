@@ -28,6 +28,10 @@ func NewStorage(dsn string) (*Storage, error) {
 	}, nil
 }
 
+func (s *Storage) Close() error {
+	return s.db.Close()
+}
+
 func (s *Storage) GetAllTasks() ([]models.Task, error) {
 	// Выполняет SQL-запрос для получения всех задач
 	rows, err := s.db.Query(`
